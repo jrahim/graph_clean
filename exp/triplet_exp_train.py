@@ -35,6 +35,7 @@ train_params.DESCRIPTION = 'Training to find dense correspondence with triplet l
 # [2]
 """ Configure dataset and log directory, depend on server ---------------------------------------------------------------
 """
+
 if server_name == 'cs-gruvi-24-cmpt-sfu-ca':
 
     # load checkpoint if needed
@@ -43,6 +44,11 @@ if server_name == 'cs-gruvi-24-cmpt-sfu-ca':
 
     # set log dir
     log_dir = './log/'
+
+if DEBUG:
+    log_dir = None
+else:
+    print('Log:' + log_dir)
 
 
 # [3]
