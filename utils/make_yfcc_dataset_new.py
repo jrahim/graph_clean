@@ -81,9 +81,9 @@ def make_dataset(json_config=None):
                                                  sampling_num_range=dataset_dict["sampling_num_range"],
                                                  load_img=True,
                                                  load_keypt_match=dataset_dict["load_keypt_match"],
-                                                 load_node_edge_feat=load_node_edge_feat,
+                                                 load_node_edge_feat=False,
                                                  sub_graph_nodes=dataset_dict["sub_graph_nodes"],
-                                                 outlier_edge_thres_deg=dataset_dict['outlier_thres'] if 'outlier_thres' in dataset_dict else None,
+                                                 outlier_edge_thres_deg=20,#dataset_dict['outlier_thres'] if 'outlier_thres' in dataset_dict else None,
                                                  sampling_undefined_edge=dataset_dict["sampling_undefine_edge"])
                                   )
     for dataset_lib, dataset_dict in train_valid_config["valid"].items():
@@ -108,9 +108,9 @@ def make_dataset(json_config=None):
                                                  sampling_num_range=dataset_dict["sampling_num_range"],
                                                  load_img=True,
                                                  load_keypt_match=dataset_dict["load_keypt_match"],
-                                                 load_node_edge_feat=dataset_dict["load_node_edge_feat"],
+                                                 load_node_edge_feat=False,
                                                  sub_graph_nodes=dataset_dict["sub_graph_nodes"],
-                                                 outlier_edge_thres_deg=dataset_dict['outlier_thres'] if 'outlier_thres' in dataset_dict else None,
+                                                 outlier_edge_thres_deg=20,#dataset_dict['outlier_thres'] if 'outlier_thres' in dataset_dict else None,
                                                  sampling_undefined_edge=dataset_dict["sampling_undefine_edge"])
                                   )
     train_set = None if len(train_dataset_list) == 0 else ConcatDataset(train_dataset_list)
