@@ -19,6 +19,7 @@ data_meta_dict = {
     }
 }
 
+
 def filtering_edge_cache(edge_cache: dict, num_nodes, verbose=False):
     filtered_edge_cache = dict()
     filtered_inout_mat = np.zeros((num_nodes, num_nodes))
@@ -42,6 +43,7 @@ def filtering_edge_cache(edge_cache: dict, num_nodes, verbose=False):
         print('[Filtered] %d / %d' % (len(filtered_edge_cache), len(edge_cache)))
     return filtered_edge_cache, filtered_inout_mat
 
+
 class CaptureDataset(Dataset):
 
     def __init__(self, dataset_dir, dataset_list, img_lmdb_paths=None,
@@ -54,6 +56,7 @@ class CaptureDataset(Dataset):
                  load_img=True,
                  load_keypt_match=False,
                  load_node_edge_feat=False,
+                 outlier_edge_thres_deg=None,
                  transform_func='default'):
 
         self.num_dataset = len(dataset_list)
@@ -66,9 +69,15 @@ class CaptureDataset(Dataset):
         self.load_keypt_match = load_keypt_match
         self.load_node_edge_feat = load_node_edge_feat
         self.use_lmdb = False
+        if outlier_edge_thres_deg is None:
+            print('[Capture Dataset] Use default outlier edge thres = 50 deg')
+            self.outlier_edge_thres_deg = 50
+        else:
+            print('[Capture Dataset] Use configed outlier edge thres = %d deg' % outlier_edge_thres_deg)
+            self.outlier_edge_thres_deg = outlier_edge_thres_deg
 
         if self.load_node_edge_feat is True:
-            if node_edge_lmdb_path is  None:
+            if node_edge_lmdb_path is None:
                 raise Exception('Can not found node edge feature lmdb: %s' % node_edge_lmdb_path)
             self.node_feat_lmdb = LMDBModel(node_edge_lmdb_path)
             node_edge_meta_path = node_edge_lmdb_path.split('.lmdb')[0] + '.bin'
@@ -96,13 +105,15 @@ class CaptureDataset(Dataset):
 
             # frame-list
             bundle_prefix = ds['bundle_prefix']
-            frame_list = read_image_list(os.path.join(dataset_dir, dataset_name, data_meta_dict[bundle_prefix]['frame_list']))
+            frame_list = read_image_list(
+                os.path.join(dataset_dir, dataset_name, data_meta_dict[bundle_prefix]['frame_list']))
             self.frame_list[dataset_name] = frame_list
 
             # camera calibration
-            K, img_dim = read_calibration(os.path.join(dataset_dir, dataset_name, data_meta_dict[bundle_prefix]['calib']))
+            K, img_dim = read_calibration(
+                os.path.join(dataset_dir, dataset_name, data_meta_dict[bundle_prefix]['calib']))
             self.K[dataset_name] = K
-            
+
         # read camera extrinsic ----------------------------------------------------------------------------------------
         self.Es = {}
 
@@ -154,7 +165,7 @@ class CaptureDataset(Dataset):
         """ Sampling ---------------------------------------------------------------------------------------------------
         """
         self.edge_sampler = {}
-        self.samples = []                                       # (dataset_id, sub-graph sample_id)
+        self.samples = []  # (dataset_id, sub-graph sample_id)
 
         if sample_res_cache is None or not os.path.exists(sample_res_cache):
 
@@ -198,7 +209,8 @@ class CaptureDataset(Dataset):
                     flag = False
                     for edge in edges:
 
-                        if ("%d-%d" % (edge[0], edge[1]) in edge_feat_pos_cache) or ("%d-%d" % (edge[1], edge[0]) in edge_feat_pos_cache):
+                        if ("%d-%d" % (edge[0], edge[1]) in edge_feat_pos_cache) or (
+                                "%d-%d" % (edge[1], edge[0]) in edge_feat_pos_cache):
                             continue
                         else:
                             flag = True
@@ -232,7 +244,7 @@ class CaptureDataset(Dataset):
 
         print('[Captured Init] Done, %d samples' % len(self.samples))
         print('[Captured Init] Rt_rel_12: n2 to n1')
-        # random.shuffle(self.samples)
+        random.shuffle(self.samples)
 
     def __len__(self):
         return len(self.samples)
@@ -419,7 +431,7 @@ class CaptureDataset(Dataset):
                 edge_rel_Rt.append(torch.from_numpy(Rt_inv))
 
                 rel_err = edge_cache['rel_err']
-                edge_type[i] = 1 if rel_err < 20 else 0
+                edge_type[i] = 1 if rel_err < self.outlier_edge_thres_deg else 0
                 edge_rel_err.append(rel_err)
 
             elif '%d-%d' % (n2, n1) in edge_local_feat_cache:
@@ -432,7 +444,7 @@ class CaptureDataset(Dataset):
                 edge_rel_Rt.append(torch.from_numpy(Rt_n2ton1))
 
                 rel_err = edge_cache['rel_err']
-                edge_type[i] = 1 if rel_err < 20 else 0
+                edge_type[i] = 1 if rel_err < self.outlier_edge_thres_deg else 0
                 edge_rel_err.append(rel_err)
 
             else:
