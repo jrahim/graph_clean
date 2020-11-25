@@ -20,7 +20,7 @@ DEBUG = True
 train_params = TrainParameters()
 train_params.MAX_EPOCHS = 40
 train_params.START_LR = 1.0e-4
-train_params.DEV_IDS = [0, 1]
+train_params.DEV_IDS = [0, 0]
 train_params.LOADER_BATCH_SIZE = 1
 train_params.LOADER_NUM_THREADS = 0
 train_params.VALID_STEPS = 700
@@ -29,7 +29,7 @@ train_params.CHECKPOINT_STEPS = 6000
 train_params.VERBOSE_MODE = True
 
 # specific unique description for current training experiments
-train_params.NAME_TAG = 'dense_correspondence_triplet_mixed'
+train_params.NAME_TAG = 'dense_correspondence_triplet'
 train_params.DESCRIPTION = 'Training to find dense correspondence with triplet loss'
 
 # [2]
