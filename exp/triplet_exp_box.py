@@ -81,7 +81,8 @@ class DenseCorrTrainBox(BaseTrainBox):
         # img_names, img_lists, img_ori_dim, _, _, _, _, _, _, _, e_node_idx, edge_label, _, _ = train_sample
         # _, img_names, img_lists, _, _, _, _, _, _, _, _, e_node_idx, edge_label, _, _, _, _, _ = train_sample
         # img_names, img_lists, e_node_idx, edge_label = train_sample
-        _, _, img_lists, _, _, _, _, _, _, _, e_node_idx, edge_label, _, _, _ = train_sample
+        # _, _, img_lists, _, _, _, _, _, _, _, e_node_idx, edge_label, _, _, _ = train_sample
+        _, _, _, img_lists, _, _, _, _, _, _, _, e_node_idx, edge_label, _, _, _, _, _, _ = train_sample
 
         bs = 8
         ineach = bs // 2
@@ -157,7 +158,7 @@ class DenseCorrTrainBox(BaseTrainBox):
         losses = []
 
         for valid_batch_idx, valid_sample in enumerate(valid_loader):
-            _, _, img_lists, _, _, _, _, _, _, _, e_node_idx, edge_label, _, _, _ = valid_sample
+            _, _, _, img_lists, _, _, _, _, _, _, _, e_node_idx, edge_label, _, _, _, _, _, _ = valid_sample
 
             bs = 8
             ineach = bs // 2
