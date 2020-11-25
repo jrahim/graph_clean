@@ -36,7 +36,7 @@ train_params.DESCRIPTION = 'Training to find dense correspondence with triplet l
 """ Configure dataset and log directory, depend on server ---------------------------------------------------------------
 """
 
-if server_name == 'cs-gruvi-24-cmpt-sfu-ca':
+if server_name.contains('24s'):
 
     # load checkpoint if needed
     checkpoint_dict = {'ckpt': None,
