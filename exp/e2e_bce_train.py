@@ -1,7 +1,7 @@
 import socket, shutil, os, pickle, json, glob
 from torch.utils.data import ConcatDataset, Subset
 from core_dl.train_params import TrainParameters
-from exp.triplet_exp_box import DenseCorrTrainBox
+from exp.e2e_bce import DenseCorrTrainBox
 from data.oned_sfm.local_feat_dataset_fast import OneDSFMDataset
 from data.capture.capture_dataset_fast import CaptureDataset
 import torchvision.transforms as transforms

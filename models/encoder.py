@@ -79,8 +79,9 @@ class Dense_Corr(torch.nn.Module):
             self.convblock2 = torch.nn.Sequential(
                 torch.nn.Conv2d(15*20+3+3, 128, 3, padding=[1, 1]),
                 torch.nn.BatchNorm2d(128),
+                torch.nn.ReLU(inplace=True),
                 torch.nn.Conv2d(128, 12, 3, padding=[1, 1], stride=2),
-                torch.nn.BatchNorm2d(64),
+                torch.nn.BatchNorm2d(12),
                 torch.nn.ReLU(inplace=True),
                 # torch.nn.Conv2d(64, 12, 3, padding=[1, 1], stride=2),
                 # torch.nn.BatchNorm2d(12)
@@ -88,14 +89,22 @@ class Dense_Corr(torch.nn.Module):
 
             self.encoder = torch.nn.Sequential(
                 torch.nn.Linear(12*8*10, 256),
-                torch.nn.ReLU(inplace=True),
+                torch.nn.Tanh(),
+                # torch.nn.ReLU(inplace=True),
                 # torch.nn.Linear(256, 256),
                 # torch.nn.ReLU(inplace=True)
             ).cuda().to(cur_dev)
 
+            self.n_reducer = torch.nn.Sequential(
+                torch.nn.Conv2d(32, 10, 3, padding=[1, 1], stride=2),
+                torch.nn.BatchNorm2d(10),
+                torch.nn.ReLU(inplace=True)
+            ).cuda().to(cur_dev)
+
             self.n_encoder = torch.nn.Sequential(
-                torch.nn.Linear(12 * 8 * 10, 256),
-                torch.nn.ReLU(inplace=True),
+                torch.nn.Linear(10*12*15, 256),
+                torch.nn.Tanh(),
+                # torch.nn.ReLU(inplace=True)
                 # torch.nn.Linear(256, 256),
                 # torch.nn.ReLU(inplace=True)
             ).cuda().to(cur_dev)
@@ -117,23 +126,24 @@ class Dense_Corr(torch.nn.Module):
             self.dense.to(cur_dev)
             N = imgs.size(0)
             #Finding Correspondences
-            opt2 = self.dense(node_feats.to(cur_dev))
-            opt2 = F.interpolate(opt2, [15, 20])
-            vectors = opt2.view(N, 64, -1).permute(0, 2, 1)
-            vectors_norm = F.normalize(vectors, dim=2)
+            opt = self.dense(node_feats.to(cur_dev))
+            opt2 = F.interpolate(opt, [15, 20])
+            vectors = opt2.view(N, 32, -1).permute(0, 2, 1)
+            vectors = F.normalize(vectors, dim=2)
             h = N // 2
-            v1 = vectors_norm[:h].clone()
-            v2 = vectors_norm[h:].clone().permute(0, 2, 1)
+            v1 = vectors[:h].clone()
+            v2 = vectors[h:].clone().permute(0, 2, 1)
 
-            dp = torch.bmm(v1, v2)
+            sim = torch.bmm(v1, v2)
 
-            sim = F.softmax(dp, dim=2)
+            sim = F.softmax(sim, dim=2)
 
             self.SEblock.to(cur_dev)
             self.convblock2.to(cur_dev)
             self.encoder.to(cur_dev)
 
             att_sim = self.SEblock(sim.view(h, 15*20, 15, 20))
+            # att_sim = sim.view(h, 15 * 20, 15, 20)
             im_rsz = F.interpolate(imgs, [15, 20])
             im_l = im_rsz[:h]
             im_r = im_rsz[h:]
@@ -141,7 +151,10 @@ class Dense_Corr(torch.nn.Module):
             im = im.to(cur_dev)
             cb2in = torch.cat((att_sim, im), 1)
             cb2out = self.convblock2(cb2in)
-            enc = self.encoder(cb2out.view(h, -1))
+            e_enc = self.encoder(cb2out.view(h, -1))
 
+            ## Node encoding
+            n_enc = self.n_reducer(opt)
+            n_enc = self.n_encoder(n_enc.view(N, -1))
 
-        return sim, enc
+        return sim, e_enc, n_enc
